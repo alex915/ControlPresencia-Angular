@@ -1,0 +1,3 @@
+export const constants = {
+  colors: ['#ffd740', '#ffc300', '#ffab00', '#cc9c00', "#b89000", "#ffdc5c", "#b87A00", '#ffd740', '#ffc300', '#ffab00', '#cc9c00', "#b89000", "#ffdc5c", "#b87A00", '#ffd740', '#ffc300', '#ffab00', '#cc9c00', "#b89000", "#ffdc5c", "#b87A00", '#ffd740', '#ffc300', '#ffab00', '#cc9c00', "#b89000", "#ffdc5c", "#b87A00", '#ffd740', '#ffc300', '#ffab00', '#cc9c00', "#b89000", "#ffdc5c", "#b87A00", '#ffd740', '#ffc300', '#ffab00', '#cc9c00', "#b89000", "#ffdc5c", "#b87A00"]
+};

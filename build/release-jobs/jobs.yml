@@ -1,0 +1,51 @@
+jobs:
+  - deployment: infrastucture
+    displayName: Deploy Infrastucture
+    pool:
+      name: 'Azure Pipelines'
+      vmImage: windows-2019
+    environment: ${{ parameters.environment }}
+    variables:
+    - group: ${{ parameters.terraformServicePrincipalVariableGroupName }}
+    - group: ${{ parameters.webConfigurationVariableGroupName }}
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: Infrastructure
+              
+          - task: TerraformInstaller@0
+            displayName: Terraform install
+            inputs:
+              terraformVersion: $(TERRAFORM_VERSION)
+
+          - task: TerraformCLI@0
+            displayName: Terraform init
+            inputs:
+              command: 'init'
+              workingDirectory: '$(Pipeline.Workspace)/Infrastructure'
+              backendType: 'azurerm'
+              backendServiceArm: ${{ parameters.subscription }}
+              ensureBackend: true
+              backendAzureRmResourceGroupName: '$(TERRAFORM_STORAGE_ACCOUNT_RESOURCE_GROUP_NAME)'
+              backendAzureRmResourceGroupLocation: '$(TERRAFORM_STORAGE_AZURE_REGION)'
+              backendAzureRmStorageAccountName: '$(TERRAFORM_STORAGE_ACCOUNT_NAME)'
+              backendAzureRmStorageAccountSku: '$(TERRAFORM_STORAGE_SKU)'
+              backendAzureRmContainerName: '$(TERRAFORM_STORAGE_CONTAINER_NAME)'
+              backendAzureRmKey: 'terraform.tfstate'
+
+          - task: TerraformCLI@0
+            displayName: Terraform plan
+            inputs:
+              command: 'plan'
+              workingDirectory: '$(Pipeline.Workspace)/Infrastructure'
+              environmentServiceName: ${{ parameters.subscription }}
+              
+          - task: TerraformCLI@0
+            displayName: Terraform apply
+            inputs:
+              command: 'apply'
+              workingDirectory: '$(Pipeline.Workspace)/Infrastructure'
+              environmentServiceName: ${{ parameters.subscription }}
+              commandOptions: '-auto-approve'

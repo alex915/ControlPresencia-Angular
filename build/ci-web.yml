@@ -1,0 +1,66 @@
+trigger:
+  branches:
+    include:
+    - master
+
+variables:
+  netCoreVersion: '3.0.100'
+
+stages:
+- stage: Build
+  jobs:
+  - job: Publish_terraform_artifacts
+    displayName: Publish terraform artifacts
+    variables:
+      - group: 'Web Configuration - DEV'
+    pool:
+      vmImage: 'Ubuntu-16.04'
+
+    steps:
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish infrastructure artifact'
+      inputs:
+        PathtoPublish: '$(System.DefaultWorkingDirectory)/deploy/web_template'
+        ArtifactName: 'Infrastructure'
+        publishLocation: 'Container'
+
+  - job:
+    displayName: Publish Web docker images
+    variables:
+      - group: 'Web Configuration - DEV'
+    pool:
+      vmImage: 'Ubuntu-16.04'
+
+    dependsOn: Publish_terraform_artifacts
+
+    steps:
+    - task: Docker@1
+      displayName: 'Build Web image'
+      inputs:
+        containerregistrytype: 'Azure Container Registry'
+        azureSubscriptionEndpoint: 'zabalburu'
+        azureContainerRegistry: 'containerregistryzabalburu.azurecr.io'
+        command: 'Build an image'
+        dockerFile: '$(Build.SourcesDirectory)/ProyectoZabalburu/Dockerfile'
+        imageName: 'app/web'
+        useDefaultContext: false
+        buildContext: '$(System.DefaultWorkingDirectory)'
+      
+    - task: Docker@1
+      displayName: 'Push Web image'
+      inputs:
+        containerregistrytype: 'Azure Container Registry'
+        azureSubscriptionEndpoint: 'zabalburu'
+        azureContainerRegistry: 'containerregistryzabalburu.azurecr.io'
+        command: 'Push an image'
+        imageName: 'app/web'
+
+- stage: Release_Dev_Env
+  displayName: Release DEV environment
+  jobs:
+  - template: release-jobs/jobs.yml
+    parameters:
+      subscription: 'zabalburu'
+      environment: 'Dev'
+      terraformServicePrincipalVariableGroupName: 'Terraform Service Principal'
+      webConfigurationVariableGroupName: 'Web Configuration - DEV'
